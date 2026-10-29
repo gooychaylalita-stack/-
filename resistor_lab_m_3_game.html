@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resistor Lab M.3 - อ่านค่าแถบสีตัวต้านทาน</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700;800&family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                        tech: ['Chakra Petch', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            dark: '#0f172a',
+                            card: '#1e293b',
+                            accent: '#06b6d4',
+                            neonGreen: '#10b981',
+                            neonPink: '#ec4899',
+                            yellow: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            user-select: none;
+        }
+        .tech-font {
+            font-family: 'Chakra Petch', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        .timer-bar {
+            transition: width 0.1s linear;
+        }
+        /* Custom Band Colors */
+        .color-black { fill: #18181b; background-color: #18181b; color: #fff; }
+        .color-brown { fill: #854d0e; background-color: #854d0e; color: #fff; }
+        .color-red { fill: #dc2626; background-color: #dc2626; color: #fff; }
+        .color-orange { fill: #ea580c; background-color: #ea580c; color: #fff; }
+        .color-yellow { fill: #facc15; background-color: #facc15; color: #000; }
+        .color-green { fill: #16a34a; background-color: #16a34a; color: #fff; }
+        .color-blue { fill: #2563eb; background-color: #2563eb; color: #fff; }
+        .color-violet { fill: #9333ea; background-color: #9333ea; color: #fff; }
+        .color-gray { fill: #6b7280; background-color: #6b7280; color: #fff; }
+        .color-white { fill: #f8fafc; background-color: #f8fafc; color: #000; }
+        .color-gold { fill: #d97706; background-color: #d97706; color: #fff; }
+        .color-silver { fill: #94a3b8; background-color: #94a3b8; color: #000; }
+
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.4)); }
+            50% { filter: drop-shadow(0 0 25px rgba(6, 182, 212, 0.8)); }
+        }
+        .resistor-svg-glow {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-3 md:p-6 min-h-screen flex flex-col justify-between">
+
+    <div class="max-w-4xl mx-auto w-full">
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-700 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-cyan-500/20 text-cyan-400 p-3 rounded-2xl border border-cyan-500/30 text-2xl">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 tech-font">
+                        RESISTOR LAB M.3
+                    </h1>
+                    <p class="text-xs md:text-sm text-slate-400">เกมการศึกษาการอ่านค่าแถบสีตัวต้านทาน (หลักสูตร ม.3)</p>
+                </div>
+            </div>
+
+            <!-- MODE SWITCH NAVIGATION -->
+            <div class="flex bg-slate-800/80 p-1 rounded-2xl border border-slate-700 w-full md:w-auto">
+                <button onclick="switchMode('learn')" id="tab-learn" class="flex-1 md:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all bg-cyan-500 text-slate-900 shadow-lg">
+                    <i class="fa-solid fa-book-open mr-1"></i> โหมดเรียนรู้
+                </button>
+                <button onclick="switchMode('quiz')" id="tab-quiz" class="flex-1 md:flex-none px-5 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all">
+                    <i class="fa-solid fa-gamepad mr-1"></i> มินิเกมภารกิจ
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <main>
+            <!-- ================= MODE 1: LEARNING / INTERACTIVE LAB ================= -->
+            <div id="mode-learn" class="space-y-6">
+                <!-- RESISTOR VISUALIZER & SIMULATOR -->
+                <div class="glass-panel p-6 rounded-3xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> จำลองการอ่านค่าแถบสีเรียลไทม์ (4 แถบ)
+                        </h2>
+                        <span class="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full">ทดลองเปลี่ยนสี</span>
+                    </div>
+
+                    <!-- Resistor SVG Display -->
+                    <div class="w-full flex justify-center items-center py-6 bg-slate-900/60 rounded-2xl border border-slate-800 mb-6 overflow-hidden">
+                        <svg id="interactive-resistor" class="w-full max-w-md h-32 resistor-svg-glow" viewBox="0 0 400 120">
+                            <!-- Wire Leads -->
+                            <rect x="10" y="55" width="70" height="10" fill="#94a3b8" rx="3" />
+                            <rect x="320" y="55" width="70" height="10" fill="#94a3b8" rx="3" />
+                            <!-- Resistor Body -->
+                            <path d="M 70,60 C 70,30 90,20 120,20 L 280,20 C 310,20 330,30 330,60 C 330,90 310,100 280,100 L 120,100 C 90,100 70,90 70,60 Z" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="2"/>
+                            <!-- Inner Bulge Shading -->
+                            <path d="M 70,60 C 70,30 90,20 120,20 L 140,20 C 120,20 100,30 100,60 C 100,90 120,100 140,100 L 120,100 C 90,100 70,90 70,60 Z" fill="#cbd5e1" opacity="0.5"/>
+                            <path d="M 330,60 C 330,30 310,20 280,20 L 260,20 C 280,20 300,30 300,60 C 300,90 280,100 260,100 L 280,100 C 310,100 330,90 330,60 Z" fill="#cbd5e1" opacity="0.5"/>
+                            
+                            <!-- Bands -->
+                            <!-- Band 1 -->
+                            <rect id="sim-band-1" x="120" y="20" width="20" height="80" class="color-brown" rx="2"/>
+                            <!-- Band 2 -->
+                            <rect id="sim-band-2" x="160" y="20" width="20" height="80" class="color-black" rx="2"/>
+                            <!-- Band 3 (Multiplier) -->
+                            <rect id="sim-band-3" x="200" y="20" width="20" height="80" class="color-red" rx="2"/>
+                            <!-- Band 4 (Tolerance) -->
+                            <rect id="sim-band-4" x="260" y="20" width="20" height="80" class="color-gold" rx="2"/>
+                        </svg>
+                    </div>
+
+                    <!-- Output Value & Calculation Breakdown -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-slate-900/80 p-4 rounded-2xl border border-cyan-500/30 flex flex-col justify-center text-center">
+                            <span class="text-xs text-slate-400 font-semibold mb-1">ค่าความต้านทานที่อ่านได้</span>
+                            <div id="sim-value-text" class="text-3xl md:text-4xl font-extrabold text-cyan-400 tech-font">
+                                1,000 Ω ±5%
+                            </div>
+                            <span id="sim-formatted-text" class="text-sm text-emerald-400 font-bold mt-1">(1 kΩ ±5%)</span>
+                        </div>
+
+                        <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 text-sm space-y-2">
+                            <span class="text-xs text-slate-400 font-semibold block border-b border-slate-700 pb-1">💡 แยกรายละเอียดวิธีคิด:</span>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">แถบที่ 1 (หลักที่ 1):</span>
+                                <span id="calc-b1" class="font-bold text-amber-400">1</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">แถบที่ 2 (หลักที่ 2):</span>
+                                <span id="calc-b2" class="font-bold text-amber-400">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">แถบที่ 3 (ตัวคูณ):</span>
+                                <span id="calc-b3" class="font-bold text-amber-400">× 100 (10²)</span>
+                            </div>
+                            <div class="flex justify-between border-t border-slate-800 pt-1">
+                                <span class="text-slate-400">แถบที่ 4 (ความคลาดเคลื่อน):</span>
+                                <span id="calc-b4" class="font-bold text-amber-400">±5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Selection Selectors -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-300 font-bold mb-2">แถบที่ 1 (ตั้งต้น):</label>
+                            <select id="sel-band-1" onchange="updateInteractiveResistor()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:border-cyan-400">
+                                <!-- Generated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 font-bold mb-2">แถบที่ 2 (ตั้งต้น):</label>
+                            <select id="sel-band-2" onchange="updateInteractiveResistor()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:border-cyan-400">
+                                <!-- Generated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 font-bold mb-2">แถบที่ 3 (ตัวคูณ):</label>
+                            <select id="sel-band-3" onchange="updateInteractiveResistor()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:border-cyan-400">
+                                <!-- Generated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 font-bold mb-2">แถบที่ 4 (ความคลาดเคลื่อน):</label>
+                            <select id="sel-band-4" onchange="updateInteractiveResistor()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:border-cyan-400">
+                                <!-- Generated by JS -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLOR CODE REFERENCE TABLE -->
+                <div class="glass-panel p-6 rounded-3xl">
+                    <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-table"></i> ตารางรหัสสีมาตรฐานสากล (หลักสูตร ม.3)
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-900/80 text-xs text-slate-400 uppercase border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">สี</th>
+                                    <th class="p-3 text-center">แถบ 1-2 (ตัวเลข)</th>
+                                    <th class="p-3 text-center">แถบ 3 (ตัวคูณ)</th>
+                                    <th class="p-3 text-center">แถบ 4 (ความคลาดเคลื่อน)</th>
+                                    <th class="p-3">เทคนิคท่องจำ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reference-table-body" class="divide-y divide-slate-800">
+                                <!-- Generated JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MODE 2: QUIZ / CHALLENGE GAME ================= -->
+            <div id="mode-quiz" class="space-y-6 hidden">
+                <!-- QUIZ HUD / HEADER -->
+                <div class="glass-panel p-4 rounded-2xl flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-cyan-500/20 text-cyan-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-cyan-500/30">
+                            ข้อที่ <span id="q-num">1</span>/10
+                        </span>
+                        <div id="q-combo-badge" class="hidden bg-amber-500 text-slate-950 font-black px-2.5 py-1 rounded-xl text-xs animate-bounce">
+                            <i class="fa-solid fa-fire"></i> COMBO x<span id="q-combo-val">2</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block font-semibold">คะแนนรวม</span>
+                            <span id="q-score" class="text-2xl font-black text-cyan-400 tech-font">0</span>
+                        </div>
+                        <button onclick="toggleAudio()" class="text-slate-400 hover:text-cyan-400 text-xl">
+                            <i id="q-sound-icon" class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TIMER BAR -->
+                <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
+                    <div id="q-timer" class="timer-bar bg-cyan-400 h-full w-full"></div>
+                </div>
+
+                <!-- QUESTION CARD CONTAINER -->
+                <div id="quiz-card" class="glass-panel p-6 md:p-8 rounded-3xl relative">
+                    
+                    <!-- QUESTION TYPE A: READ RESISTOR COLOR -->
+                    <div id="q-type-read" class="space-y-6 hidden">
+                        <div class="text-center">
+                            <span class="text-xs font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800 px-3 py-1 rounded-full">ภารกิจ: อ่านค่าจากแถบสี</span>
+                            <h3 class="text-xl md:text-2xl font-bold mt-2 text-slate-100">
+                                ตัวต้านทานตัวนี้มีค่าความต้านทานกี่โอห์ม?
+                            </h3>
+                        </div>
+
+                        <!-- Resistor SVG Display -->
+                        <div class="flex justify-center bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+                            <svg class="w-full max-w-md h-28 resistor-svg-glow" viewBox="0 0 400 120">
+                                <rect x="10" y="55" width="70" height="10" fill="#94a3b8" rx="3" />
+                                <rect x="320" y="55" width="70" height="10" fill="#94a3b8" rx="3" />
+                                <path d="M 70,60 C 70,30 90,20 120,20 L 280,20 C 310,20 330,30 330,60 C 330,90 310,100 280,100 L 120,100 C 90,100 70,90 70,60 Z" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="2"/>
+                                <rect id="q-read-b1" x="120" y="20" width="20" height="80" rx="2"/>
+                                <rect id="q-read-b2" x="160" y="20" width="20" height="80" rx="2"/>
+                                <rect id="q-read-b3" x="200" y="20" width="20" height="80" rx="2"/>
+                                <rect id="q-read-b4" x="260" y="20" width="20" height="80" rx="2"/>
+                            </svg>
+                        </div>
+
+                        <!-- 4 Options -->
+                        <div id="q-read-options" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- JS Created Options -->
+                        </div>
+                    </div>
+
+                    <!-- QUESTION TYPE B: MATCH COLORS TO VALUE -->
+                    <div id="q-type-match" class="space-y-6 hidden">
+                        <div class="text-center">
+                            <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1 rounded-full">ภารกิจ: เทียบแถบสีเข้ากับค่าเป้าหมาย</span>
+                            <p class="text-sm text-slate-400 mt-1">จงเลือกสีของแถบสีทั้ง 4 ให้ตรงกับค่าที่กำหนดให้:</p>
+                            <h3 id="q-match-target-text" class="text-3xl font-black text-cyan-400 tech-font mt-2">
+                                4.7 kΩ ±5%
+                            </h3>
+                        </div>
+
+                        <!-- Resistor Interactive Display -->
+                        <div class="flex justify-center bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                            <svg class="w-full max-w-sm h-24" viewBox="0 0 400 120">
+                                <rect x="10" y="55" width="70" height="10" fill="#94a3b8" rx="3" />
+                                <rect x="320" y="55" width="70" height="10" fill="#94a3b8" rx="3" />
+                                <path d="M 70,60 C 70,30 90,20 120,20 L 280,20 C 310,20 330,30 330,60 C 330,90 310,100 280,100 L 120,100 C 90,100 70,90 70,60 Z" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="2"/>
+                                <rect id="q-match-b1" x="120" y="20" width="20" height="80" rx="2" class="color-brown"/>
+                                <rect id="q-match-b2" x="160" y="20" width="20" height="80" rx="2" class="color-black"/>
+                                <rect id="q-match-b3" x="200" y="20" width="20" height="80" rx="2" class="color-black"/>
+                                <rect id="q-match-b4" x="260" y="20" width="20" height="80" rx="2" class="color-gold"/>
+                            </svg>
+                        </div>
+
+                        <!-- Color Pickers for Match Mode -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">แถบที่ 1:</label>
+                                <select id="q-sel-b1" onchange="updateMatchVisuals()" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-xs font-bold"></select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">แถบที่ 2:</label>
+                                <select id="q-sel-b2" onchange="updateMatchVisuals()" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-xs font-bold"></select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">แถบที่ 3 (คูณ):</label>
+                                <select id="q-sel-b3" onchange="updateMatchVisuals()" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-xs font-bold"></select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 block mb-1">แถบที่ 4 (คลาดเคลื่อน):</label>
+                                <select id="q-sel-b4" onchange="updateMatchVisuals()" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-xs font-bold"></select>
+                            </div>
+                        </div>
+
+                        <button id="btn-submit-match" onclick="checkMatchAnswer()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-3 rounded-2xl transition-all text-base shadow-lg shadow-cyan-500/20">
+                            ส่งคำตอบ <i class="fa-solid fa-paper-plane ml-1"></i>
+                        </button>
+                    </div>
+
+                    <!-- EXPLANATION MODAL / FEEDBACK BOX -->
+                    <div id="q-feedback-box" class="mt-6 bg-slate-900/90 border border-slate-700 p-4 rounded-2xl hidden">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span id="feedback-icon" class="text-xl"></span>
+                            <h4 id="feedback-title" class="font-bold text-base"></h4>
+                        </div>
+                        <p id="feedback-text" class="text-sm text-slate-300 leading-relaxed"></p>
+                    </div>
+
+                </div>
+
+                <!-- END OF GAME RESULT SCREEN -->
+                <div id="quiz-result-screen" class="glass-panel p-8 rounded-3xl text-center hidden space-y-6">
+                    <div id="result-icon-box" class="text-6xl text-amber-400">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h2 id="result-title" class="text-3xl font-extrabold text-white">ยอดเยี่ยมมาก!</h2>
+                        <p id="result-subtitle" class="text-slate-400 text-sm mt-1">คุณเชี่ยวชาญการอ่านแถบสีตัวต้านทานแล้ว</p>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 grid grid-cols-2 gap-4">
+                        <div class="border-r border-slate-800 pr-2">
+                            <span class="text-xs text-slate-400 block font-semibold">คะแนนรวมทั้งหมด</span>
+                            <span id="res-score" class="text-4xl font-black text-cyan-400 tech-font">0</span>
+                        </div>
+                        <div class="pl-2">
+                            <span class="text-xs text-slate-400 block font-semibold">ตอบถูกต้อง</span>
+                            <span id="res-accuracy" class="text-4xl font-black text-emerald-400 tech-font">0/10</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <button onclick="startQuizGame()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold py-4 rounded-2xl text-lg shadow-lg transition-all">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> เล่นอีกครั้ง
+                        </button>
+                        <button onclick="switchMode('learn')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-2xl text-sm transition-all">
+                            ทบทวนเนื้อหาบทเรียน
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-8 text-center text-xs text-slate-500 border-t border-slate-800/80 pt-4">
+        วิชาวิทยาศาสตร์และเทคโนโลยี ชั้นมัธยมศึกษาปีที่ 3 • สาระการเรียนรู้วิทยาศาสตร์พื้นฐาน
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Color Database Standards for 4-Band Resistors
+        const BAND_COLORS = [
+            { name: "ดำ (Black)", code: "black", digit: 0, mult: 1, multExp: "10⁰", tol: null, mnemonic: "ดำ = 0 (ศูนย์)" },
+            { name: "น้ำตาล (Brown)", code: "brown", digit: 1, mult: 10, multExp: "10¹", tol: 1, mnemonic: "น้ำตาล = 1" },
+            { name: "แดง (Red)", code: "red", digit: 2, mult: 100, multExp: "10²", tol: 2, mnemonic: "แดง = 2" },
+            { name: "ส้ม (Orange)", code: "orange", digit: 3, mult: 1000, multExp: "10³", tol: null, mnemonic: "ส้ม = 3" },
+            { name: "เหลือง (Yellow)", code: "yellow", digit: 4, mult: 10000, multExp: "10⁴", tol: null, mnemonic: "เหลือง = 4" },
+            { name: "เขียว (Green)", code: "green", digit: 5, mult: 100000, multExp: "10⁵", tol: 0.5, mnemonic: "เขียว = 5" },
+            { name: "น้ำเงิน (Blue)", code: "blue", digit: 6, mult: 1000000, multExp: "10⁶", tol: 0.25, mnemonic: "น้ำเงิน = 6" },
+            { name: "ม่วง (Violet)", code: "violet", digit: 7, mult: 10000000, multExp: "10⁷", tol: 0.1, mnemonic: "ม่วง = 7" },
+            { name: "เทา (Gray)", code: "gray", digit: 8, mult: 100000000, multExp: "10⁸", tol: 0.05, mnemonic: "เทา = 8" },
+            { name: "ขาว (White)", code: "white", digit: 9, mult: 1000000000, multExp: "10⁹", tol: null, mnemonic: "ขาว = 9" },
+            { name: "ทอง (Gold)", code: "gold", digit: null, mult: 0.1, multExp: "10⁻¹", tol: 5, mnemonic: "ทอง = คูณ 0.1 / คลาดเคลื่อน ±5%" },
+            { name: "เงิน (Silver)", code: "silver", digit: null, mult: 0.01, multExp: "10⁻²", tol: 10, mnemonic: "เงิน = คูณ 0.01 / คลาดเคลื่อน ±10%" }
+        ];
+
+        // Web Audio Synthesizer
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {}
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('q-sound-icon');
+            icon.className = soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-red-400';
+        }
+
+        // Format Ohms Value nicely (e.g., 1000 => 1 kΩ, 4700000 => 4.7 MΩ)
+        function formatOhmValue(val) {
+            if (val >= 1000000) {
+                let v = val / 1000000;
+                return `${Number.isInteger(v) ? v : v.toFixed(1)} MΩ`;
+            } else if (val >= 1000) {
+                let v = val / 1000;
+                return `${Number.isInteger(v) ? v : v.toFixed(1)} kΩ`;
+            }
+            return `${Number.isInteger(val) ? val : val.toFixed(2)} Ω`;
+        }
+
+        // Init Interactive Learning Mode UI
+        function initLearningMode() {
+            const b1 = document.getElementById('sel-band-1');
+            const b2 = document.getElementById('sel-band-2');
+            const b3 = document.getElementById('sel-band-3');
+            const b4 = document.getElementById('sel-band-4');
+
+            b1.innerHTML = ''; b2.innerHTML = ''; b3.innerHTML = ''; b4.innerHTML = '';
+
+            // Populate Band 1 & 2 (Digits 0-9)
+            BAND_COLORS.filter(c => c.digit !== null).forEach(c => {
+                if (c.digit !== 0) b1.innerHTML += `<option value="${c.code}">${c.name} (${c.digit})</option>`;
+                b2.innerHTML += `<option value="${c.code}">${c.name} (${c.digit})</option>`;
+            });
+
+            // Populate Band 3 (Multipliers)
+            BAND_COLORS.filter(c => c.mult !== null).forEach(c => {
+                b3.innerHTML += `<option value="${c.code}">${c.name} (${c.multExp})</option>`;
+            });
+
+            // Populate Band 4 (Tolerance)
+            BAND_COLORS.filter(c => c.tol !== null).forEach(c => {
+                b4.innerHTML += `<option value="${c.code}">${c.name} (±${c.tol}%)</option>`;
+            });
+
+            // Defaults: Brown, Black, Red, Gold = 1 kΩ ±5%
+            b1.value = 'brown';
+            b2.value = 'black';
+            b3.value = 'red';
+            b4.value = 'gold';
+
+            // Populate Reference Table
+            const tbody = document.getElementById('reference-table-body');
+            tbody.innerHTML = '';
+            BAND_COLORS.forEach(c => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50 transition-colors">
+                        <td class="p-3 font-bold flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full border border-slate-600 inline-block color-${c.code}"></span>
+                            ${c.name}
+                        </td>
+                        <td class="p-3 text-center font-bold text-amber-400">${c.digit !== null ? c.digit : '-'}</td>
+                        <td class="p-3 text-center font-bold text-cyan-400">${c.multExp || '-'}</td>
+                        <td class="p-3 text-center font-bold text-emerald-400">${c.tol !== null ? '±' + c.tol + '%' : '-'}</td>
+                        <td class="p-3 text-xs text-slate-400">${c.mnemonic}</td>
+                    </tr>
+                `;
+            });
+
+            updateInteractiveResistor();
+        }
+
+        // Update Real-time Learning Resistor
+        function updateInteractiveResistor() {
+            const code1 = document.getElementById('sel-band-1').value;
+            const code2 = document.getElementById('sel-band-2').value;
+            const code3 = document.getElementById('sel-band-3').value;
+            const code4 = document.getElementById('sel-band-4').value;
+
+            // Update SVG Colors
+            document.getElementById('sim-band-1').setAttribute('class', `color-${code1}`);
+            document.getElementById('sim-band-2').setAttribute('class', `color-${code2}`);
+            document.getElementById('sim-band-3').setAttribute('class', `color-${code3}`);
+            document.getElementById('sim-band-4').setAttribute('class', `color-${code4}`);
+
+            // Calculate Value
+            const obj1 = BAND_COLORS.find(c => c.code === code1);
+            const obj2 = BAND_COLORS.find(c => c.code === code2);
+            const obj3 = BAND_COLORS.find(c => c.code === code3);
+            const obj4 = BAND_COLORS.find(c => c.code === code4);
+
+            const baseDigit = (obj1.digit * 10) + obj2.digit;
+            const ohmVal = baseDigit * obj3.mult;
+
+            document.getElementById('sim-value-text').innerText = `${ohmVal.toLocaleString()} Ω ±${obj4.tol}%`;
+            document.getElementById('sim-formatted-text').innerText = `(${formatOhmValue(ohmVal)} ±${obj4.tol}%)`;
+
+            // Update Calculation breakdown
+            document.getElementById('calc-b1').innerText = `${obj1.digit}`;
+            document.getElementById('calc-b2').innerText = `${obj2.digit}`;
+            document.getElementById('calc-b3').innerText = `× ${obj3.mult} (${obj3.multExp})`;
+            document.getElementById('calc-b4').innerText = `±${obj4.tol}%`;
+        }
+
+        // ================= QUIZ GAME ENGINE =================
+        let quizQuestions = [];
+        let currentQIdx = 0;
+        let score = 0;
+        let correctCount = 0;
+        let streak = 0;
+        let qTimer = null;
+        let qTimeLeft = 10;
+        const Q_MAX_TIME = 15; // 15 seconds per question
+
+        function switchMode(mode) {
+            if (mode === 'learn') {
+                document.getElementById('mode-learn').classList.remove('hidden');
+                document.getElementById('mode-quiz').classList.add('hidden');
+                document.getElementById('tab-learn').className = 'flex-1 md:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all bg-cyan-500 text-slate-900 shadow-lg';
+                document.getElementById('tab-quiz').className = 'flex-1 md:flex-none px-5 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all';
+            } else {
+                document.getElementById('mode-learn').classList.add('hidden');
+                document.getElementById('mode-quiz').classList.remove('hidden');
+                document.getElementById('tab-quiz').className = 'flex-1 md:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all bg-cyan-500 text-slate-900 shadow-lg';
+                document.getElementById('tab-learn').className = 'flex-1 md:flex-none px-5 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all';
+                startQuizGame();
+            }
+        }
+
+        function startQuizGame() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            quizQuestions = generateQuizQuestions(10);
+            currentQIdx = 0;
+            score = 0;
+            correctCount = 0;
+            streak = 0;
+
+            document.getElementById('quiz-card').classList.remove('hidden');
+            document.getElementById('quiz-result-screen').classList.add('hidden');
+            document.getElementById('q-score').innerText = '0';
+
+            populateMatchDropdowns();
+            renderQuestion();
+        }
+
+        function generateQuizQuestions(count) {
+            let list = [];
+            for (let i = 0; i < count; i++) {
+                // Random 2 Question Types
+                const type = Math.random() > 0.5 ? 'READ' : 'MATCH';
+
+                // Pick random colors
+                const b1 = BAND_COLORS.filter(c => c.digit !== null && c.digit !== 0)[Math.floor(Math.random() * 9)];
+                const b2 = BAND_COLORS.filter(c => c.digit !== null)[Math.floor(Math.random() * 10)];
+                const b3 = BAND_COLORS.filter(c => c.mult !== null)[Math.floor(Math.random() * 12)];
+                const b4 = BAND_COLORS.filter(c => c.tol !== null)[Math.floor(Math.random() * 6)];
+
+                const rawOhm = ((b1.digit * 10) + b2.digit) * b3.mult;
+
+                list.push({
+                    type: type,
+                    b1: b1,
+                    b2: b2,
+                    b3: b3,
+                    b4: b4,
+                    rawOhm: rawOhm,
+                    formattedVal: `${formatOhmValue(rawOhm)} ±${b4.tol}%`
+                });
+            }
+            return list;
+        }
+
+        function populateMatchDropdowns() {
+            const s1 = document.getElementById('q-sel-b1');
+            const s2 = document.getElementById('q-sel-b2');
+            const s3 = document.getElementById('q-sel-b3');
+            const s4 = document.getElementById('q-sel-b4');
+
+            s1.innerHTML = ''; s2.innerHTML = ''; s3.innerHTML = ''; s4.innerHTML = '';
+
+            BAND_COLORS.filter(c => c.digit !== null && c.digit !== 0).forEach(c => s1.innerHTML += `<option value="${c.code}">${c.name}</option>`);
+            BAND_COLORS.filter(c => c.digit !== null).forEach(c => s2.innerHTML += `<option value="${c.code}">${c.name}</option>`);
+            BAND_COLORS.filter(c => c.mult !== null).forEach(c => s3.innerHTML += `<option value="${c.code}">${c.name}</option>`);
+            BAND_COLORS.filter(c => c.tol !== null).forEach(c => s4.innerHTML += `<option value="${c.code}">${c.name}</option>`);
+        }
+
+        function renderQuestion() {
+            if (qTimer) clearInterval(qTimer);
+            document.getElementById('q-feedback-box').classList.add('hidden');
+
+            const q = quizQuestions[currentQIdx];
+            document.getElementById('q-num').innerText = currentQIdx + 1;
+
+            // Combo badge
+            const comboBadge = document.getElementById('q-combo-badge');
+            if (streak >= 2) {
+                comboBadge.classList.remove('hidden');
+                document.getElementById('q-combo-val').innerText = streak;
+            } else {
+                comboBadge.classList.add('hidden');
+            }
+
+            if (q.type === 'READ') {
+                document.getElementById('q-type-read').classList.remove('hidden');
+                document.getElementById('q-type-match').classList.add('hidden');
+
+                // Render colors to SVG
+                document.getElementById('q-read-b1').setAttribute('class', `color-${q.b1.code}`);
+                document.getElementById('q-read-b2').setAttribute('class', `color-${q.b2.code}`);
+                document.getElementById('q-read-b3').setAttribute('class', `color-${q.b3.code}`);
+                document.getElementById('q-read-b4').setAttribute('class', `color-${q.b4.code}`);
+
+                // Generate Options
+                const optsContainer = document.getElementById('q-read-options');
+                optsContainer.innerHTML = '';
+
+                // Create 3 distractor values
+                let optionsSet = new Set([q.formattedVal]);
+                while (optionsSet.size < 4) {
+                    const randB1 = BAND_COLORS.filter(c => c.digit !== null && c.digit !== 0)[Math.floor(Math.random() * 9)];
+                    const randB2 = BAND_COLORS.filter(c => c.digit !== null)[Math.floor(Math.random() * 10)];
+                    const randB3 = BAND_COLORS.filter(c => c.mult !== null)[Math.floor(Math.random() * 12)];
+                    const fakeOhm = ((randB1.digit * 10) + randB2.digit) * randB3.mult;
+                    optionsSet.add(`${formatOhmValue(fakeOhm)} ±${q.b4.tol}%`);
+                }
+
+                const shuffledOpts = Array.from(optionsSet).sort(() => Math.random() - 0.5);
+                shuffledOpts.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-4 rounded-2xl font-bold text-center text-cyan-300 transition-all hover:scale-[1.02] tech-font text-lg';
+                    btn.innerText = opt;
+                    btn.onclick = () => checkReadAnswer(opt, btn, q);
+                    optsContainer.appendChild(btn);
+                });
+
+            } else {
+                document.getElementById('q-type-read').classList.add('hidden');
+                document.getElementById('q-type-match').classList.remove('hidden');
+
+                document.getElementById('q-match-target-text').innerText = q.formattedVal;
+                document.getElementById('btn-submit-match').disabled = false;
+
+                updateMatchVisuals();
+            }
+
+            startQTimer();
+        }
+
+        function updateMatchVisuals() {
+            const c1 = document.getElementById('q-sel-b1').value;
+            const c2 = document.getElementById('q-sel-b2').value;
+            const c3 = document.getElementById('q-sel-b3').value;
+            const c4 = document.getElementById('q-sel-b4').value;
+
+            document.getElementById('q-match-b1').setAttribute('class', `color-${c1}`);
+            document.getElementById('q-match-b2').setAttribute('class', `color-${c2}`);
+            document.getElementById('q-match-b3').setAttribute('class', `color-${c3}`);
+            document.getElementById('q-match-b4').setAttribute('class', `color-${c4}`);
+        }
+
+        function startQTimer() {
+            qTimeLeft = Q_MAX_TIME;
+            const timerBar = document.getElementById('q-timer');
+            timerBar.style.width = '100%';
+
+            qTimer = setInterval(() => {
+                qTimeLeft -= 0.1;
+                const percentage = (qTimeLeft / Q_MAX_TIME) * 100;
+                timerBar.style.width = `${Math.max(0, percentage)}%`;
+
+                if (qTimeLeft <= 0) {
+                    clearInterval(qTimer);
+                    handleQTimeout();
+                }
+            }, 100);
+        }
+
+        function checkReadAnswer(selectedOpt, btnElem, q) {
+            clearInterval(qTimer);
+            disableReadOptions();
+
+            const isCorrect = selectedOpt === q.formattedVal;
+            showFeedback(isCorrect, q);
+
+            if (isCorrect) {
+                btnElem.className = 'w-full bg-emerald-600 border border-emerald-400 p-4 rounded-2xl font-bold text-center text-white tech-font text-lg animate-bounce';
+                handleCorrectAnswer();
+            } else {
+                btnElem.className = 'w-full bg-rose-600 border border-rose-400 p-4 rounded-2xl font-bold text-center text-white tech-font text-lg';
+                handleWrongAnswer();
+            }
+        }
+
+        function checkMatchAnswer() {
+            clearInterval(qTimer);
+            document.getElementById('btn-submit-match').disabled = true;
+
+            const q = quizQuestions[currentQIdx];
+            const u1 = document.getElementById('q-sel-b1').value;
+            const u2 = document.getElementById('q-sel-b2').value;
+            const u3 = document.getElementById('q-sel-b3').value;
+            const u4 = document.getElementById('q-sel-b4').value;
+
+            const isCorrect = (u1 === q.b1.code && u2 === q.b2.code && u3 === q.b3.code && u4 === q.b4.code);
+            showFeedback(isCorrect, q);
+
+            if (isCorrect) {
+                handleCorrectAnswer();
+            } else {
+                handleWrongAnswer();
+            }
+        }
+
+        function handleCorrectAnswer() {
+            playSound('correct');
+            streak++;
+            correctCount++;
+
+            const addedScore = 100 + Math.floor(qTimeLeft * 10) + ((streak - 1) * 20);
+            score += addedScore;
+            document.getElementById('q-score').innerText = score;
+
+            confetti({ particleCount: 35, spread: 60, origin: { y: 0.7 } });
+            setTimeout(nextQuestion, 2500);
+        }
+
+        function handleWrongAnswer() {
+            playSound('wrong');
+            streak = 0;
+            setTimeout(nextQuestion, 3000);
+        }
+
+        function handleQTimeout() {
+            const q = quizQuestions[currentQIdx];
+            showFeedback(false, q, "หมดเวลาแล้ว!");
+            playSound('wrong');
+            streak = 0;
+            setTimeout(nextQuestion, 3000);
+        }
+
+        function showFeedback(isCorrect, q, customMsg = null) {
+            const box = document.getElementById('q-feedback-box');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const text = document.getElementById('feedback-text');
+
+            box.classList.remove('hidden');
+
+            if (isCorrect) {
+                box.className = 'mt-6 bg-emerald-950/80 border border-emerald-500 p-4 rounded-2xl';
+                icon.className = 'fa-solid fa-circle-check text-emerald-400 text-xl';
+                title.className = 'font-bold text-base text-emerald-400';
+                title.innerText = 'ถูกต้องแล้ว! เก่งมาก';
+            } else {
+                box.className = 'mt-6 bg-rose-950/80 border border-rose-500 p-4 rounded-2xl';
+                icon.className = 'fa-solid fa-circle-xmark text-rose-400 text-xl';
+                title.className = 'font-bold text-base text-rose-400';
+                title.innerText = customMsg || 'ยังไม่ถูกต้อง!';
+            }
+
+            text.innerHTML = `
+                <strong>เฉลยและวิธีคิด:</strong><br>
+                • แถบที่ 1 (${q.b1.name}) = <strong>${q.b1.digit}</strong><br>
+                • แถบที่ 2 (${q.b2.name}) = <strong>${q.b2.digit}</strong><br>
+                • แถบที่ 3 (${q.b3.name}) = ตัวคูณ <strong>${q.b3.multExp} (${q.b3.mult})</strong><br>
+                • แถบที่ 4 (${q.b4.name}) = ความคลาดเคลื่อน <strong>±${q.b4.tol}%</strong><br>
+                👉 คำนวณ: (${q.b1.digit}${q.b2.digit}) × ${q.b3.mult} = <strong>${q.formattedVal}</strong>
+            `;
+        }
+
+        function disableReadOptions() {
+            const btns = document.querySelectorAll('#q-read-options button');
+            btns.forEach(b => b.disabled = true);
+        }
+
+        function nextQuestion() {
+            currentQIdx++;
+            if (currentQIdx < quizQuestions.length) {
+                renderQuestion();
+            } else {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            document.getElementById('quiz-card').classList.add('hidden');
+            document.getElementById('quiz-result-screen').classList.remove('hidden');
+
+            document.getElementById('res-score').innerText = score;
+            document.getElementById('res-accuracy').innerText = `${correctCount}/${quizQuestions.length}`;
+
+            const title = document.getElementById('result-title');
+            const subtitle = document.getElementById('result-subtitle');
+
+            if (correctCount === 10) {
+                title.innerText = "อัจฉริยะวงจรไฟฟ้า! ⚡";
+                subtitle.innerText = "คุณตอบถูกครบ 10 ข้อเต็ม สัญลักษณ์แห่งความแม่นยำ!";
+                confetti({ particleCount: 100, spread: 100, origin: { y: 0.6 } });
+            } else if (correctCount >= 7) {
+                title.innerText = "ยอดเยี่ยมมาก! 🌟";
+                subtitle.innerText = "คุณเข้าใจรหัสสีตัวต้านทานชั้น ม.3 ได้เป็นอย่างดี";
+            } else {
+                title.innerText = "พยายามอีกนิดนะ! 💪";
+                subtitle.innerText = "ทบทวนตารางรหัสสีในโหมดเรียนรู้ แล้วกลับมาสู้ใหม่ได้เลย";
+            }
+        }
+
+        // Initialize App on window load
+        window.onload = function() {
+            initLearningMode();
+        };
+    </script>
+</body>
+</html>
